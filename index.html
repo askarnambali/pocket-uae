@@ -293,6 +293,21 @@
     .hist-tr { font-size: 12px; color: var(--gold); font-style: italic; }
     .empty-state { text-align: center; color: var(--muted); padding: 50px 20px; font-size: 15px; line-height: 2; }
 
+
+    /* ── USAGE BAR ── */
+    .usage-bar-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+    .usage-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+    .usage-label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+    .usage-count { font-size: 12px; font-weight: 700; color: var(--text2); }
+    .usage-track { height: 7px; background: var(--bg2); border-radius: 10px; overflow: hidden; }
+    .usage-fill { height: 100%; border-radius: 10px; transition: width 0.4s ease; background: var(--green); }
+    .usage-fill.warn { background: #e67e22; }
+    .usage-fill.danger { background: var(--danger); }
+    .usage-reset { font-size: 10px; color: var(--dim); margin-top: 5px; text-align: right; }
     /* ── BOTTOM NAV ── */
     .bottom-bar {
       position: fixed; bottom: 0; left: 0; right: 0;
@@ -327,6 +342,19 @@
       <button class="btn-save" onclick="saveApiKey()">Save</button>
     </div>
     <div id="keyStatus"></div>
+  </div>
+
+
+  <!-- Usage Bar -->
+  <div class="usage-bar-wrap" id="usageWrap">
+    <div class="usage-top">
+      <span class="usage-label">📊 Daily API Usage</span>
+      <span class="usage-count" id="usageCount">0 / 250</span>
+    </div>
+    <div class="usage-track">
+      <div class="usage-fill" id="usageFill" style="width:0%"></div>
+    </div>
+    <div class="usage-reset" id="usageReset"></div>
   </div>
 
   <!-- Mode Selector -->
@@ -396,6 +424,42 @@
 <div class="bottom-bar">Emirati Pocket · اللهجة الإماراتية · മലയാളം</div>
 
 <script>
+
+// ── USAGE TRACKING ────────────────────────────────────────────────────────────
+const DAILY_LIMIT = 250;
+
+function getUsage() {
+  const today = new Date().toDateString();
+  const stored = JSON.parse(localStorage.getItem("ep_usage") || '{"date":"","count":0}');
+  if (stored.date !== today) return { date: today, count: 0 };
+  return stored;
+}
+
+function incrementUsage() {
+  const usage = getUsage();
+  usage.count += 1;
+  localStorage.setItem("ep_usage", JSON.stringify(usage));
+  updateUsageUI();
+  return usage.count;
+}
+
+function updateUsageUI() {
+  const usage = getUsage();
+  const count = usage.count;
+  const pct = Math.min((count / DAILY_LIMIT) * 100, 100);
+  document.getElementById("usageCount").textContent = count + " / " + DAILY_LIMIT;
+  const fill = document.getElementById("usageFill");
+  fill.style.width = pct + "%";
+  fill.className = "usage-fill" + (pct >= 90 ? " danger" : pct >= 70 ? " warn" : "");
+
+  // Reset time
+  const now = new Date();
+  const midnight = new Date(now); midnight.setHours(24,0,0,0);
+  const hrs = Math.floor((midnight - now) / 3600000);
+  const mins = Math.floor(((midnight - now) % 3600000) / 60000);
+  document.getElementById("usageReset").textContent = "Resets in " + hrs + "h " + mins + "m";
+}
+
 // ── PROMPTS ──────────────────────────────────────────────────────────────────
 
 const PROMPTS = {
@@ -533,6 +597,8 @@ function init() {
   }
   checkVoiceSupport();
   renderCats();
+  updateUsageUI();
+  setInterval(updateUsageUI, 60000);
 }
 
 function checkVoiceSupport() {
@@ -716,6 +782,11 @@ async function doTranslate() {
   const input = document.getElementById("mainInput").value.trim();
   if (!input) return;
   if (!apiKey) { showError("Please enter your Gemini API key above first."); return; }
+  const currentUsage = getUsage();
+  if (currentUsage.count >= DAILY_LIMIT) {
+    showError("Daily limit of " + DAILY_LIMIT + " requests reached. Resets at midnight. Consider using gemini-2.5-flash-lite for 1000/day.");
+    return;
+  }
 
   showLoading(true);
   hideError();
@@ -730,7 +801,7 @@ async function doTranslate() {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: PROMPTS[mode] }] },
           contents: [{ role: "user", parts: [{ text: input }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 1000 }
+          generationConfig: { temperature: 0.3, maxOutputTokens: 2048 }
         })
       }
     );
@@ -738,8 +809,38 @@ async function doTranslate() {
     if (data.error) throw new Error(data.error.message);
     const raw = data.candidates[0].content.parts[0].text;
     const clean = raw.replace(/```json|```/g,"").trim();
-    const parsed = JSON.parse(clean);
+    let parsed;
+    try {
+      parsed = JSON.parse(clean);
+    } catch(jsonErr) {
+      // Try to fix truncated JSON by closing open brackets
+      let fixed = clean;
+      const openB = (fixed.match(/\{/g)||[]).length;
+      const closeB = (fixed.match(/\}/g)||[]).length;
+      const openA = (fixed.match(/\[/g)||[]).length;
+      const closeA = (fixed.match(/\]/g)||[]).length;
+      // Close any open string — find last quote situation
+      const quoteCount = (fixed.match(/(?<!\)"/g)||[]).length;
+      if (quoteCount % 2 !== 0) fixed += '"';
+      for (let x = 0; x < openA - closeA; x++) fixed += "]";
+      for (let x = 0; x < openB - closeB; x++) fixed += "}";
+      try {
+        parsed = JSON.parse(fixed);
+      } catch(e2) {
+        // Build a minimal result from whatever text we got
+        parsed = {
+          emirati: "⚠️ Response was cut off",
+          transliteration: "Try a shorter or simpler input",
+          malayalam: "⚠️ Response was cut off",
+          source: input,
+          type: "phrase",
+          notes: "The AI response was incomplete. Please try again with a shorter input.",
+          examples: []
+        };
+      }
+    }
     showResult(parsed, input);
+    incrementUsage();
     history = [{ mode, input, result: parsed, ts: Date.now() }, ...history.slice(0, 59)];
     localStorage.setItem("ep_history", JSON.stringify(history));
   } catch(e) {
