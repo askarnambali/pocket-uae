@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Emirati Pocket</title>
+  <meta name="theme-color" content="#f5efe6" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Emirati" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Lato:wght@300;400;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg:        #f5efe6;
+      --bg2:       #ede4d8;
+      --surface:   #ffffff;
+      --surface2:  #fdf8f3;
+      --border:    #d9cfc4;
+      --border2:   #c4b8a8;
+      --gold:      #b5800a;
+      --gold-dark: #8a5e06;
+      --gold-bg:   #fdf3e0;
+      --text:      #2c2015;
+      --text2:     #5c4a35;
+      --muted:     #9c8870;
+      --dim:       #b8a898;
+      --danger:    #c0392b;
+      --green:     #27ae60;
+      --blue:      #2980b9;
+      --shadow:    0 2px 12px rgba(100,70,20,0.10);
+      --shadow2:   0 4px 24px rgba(100,70,20,0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Lato', sans-serif;
+      min-height: 100dvh;
+      overscroll-behavior: none;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 12px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .topbar-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px; font-weight: 600; color: var(--gold-dark);
+      letter-spacing: 0.03em;
+    }
+    .topbar-arabic {
+      font-family: 'Amiri', serif;
+      font-size: 16px; color: var(--muted);
+    }
+
+    /* ── MAIN ── */
+    .app { max-width: 480px; margin: 0 auto; padding: 70px 14px 90px; }
+
+    /* ── API KEY ── */
+    .setup-card {
+      background: var(--gold-bg); border: 1px solid #e8d5a0;
+      border-radius: 16px; padding: 16px; margin-bottom: 18px;
+      box-shadow: var(--shadow);
+    }
+    .setup-card h3 { font-size: 14px; color: var(--gold-dark); margin-bottom: 6px; font-weight: 700; }
+    .setup-card p { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; }
+    .setup-card a { color: var(--gold); font-weight: 700; }
+    .key-row { display: flex; gap: 8px; }
+    .key-row input {
+      flex: 1; background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 10px; padding: 10px 12px; color: var(--text);
+      font-family: monospace; font-size: 13px; outline: none;
+    }
+    .key-row input:focus { border-color: var(--gold); }
+    .btn-save {
+      background: var(--gold); border: none; border-radius: 10px;
+      padding: 0 16px; color: white; font-weight: 700; font-size: 13px; cursor: pointer;
+    }
+    #keyStatus { font-size: 11px; color: var(--green); margin-top: 7px; }
+
+    /* ── MODE SELECTOR ── */
+    .section-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+    }
+    .modes { display: flex; gap: 8px; margin-bottom: 18px; }
+    .mode-btn {
+      flex: 1; padding: 12px 6px; border: 1.5px solid var(--border);
+      border-radius: 14px; background: var(--surface); cursor: pointer;
+      font-family: 'Lato', sans-serif; text-align: center; transition: all 0.2s;
+      box-shadow: var(--shadow);
+    }
+    .mode-btn .micon { font-size: 22px; display: block; margin-bottom: 4px; }
+    .mode-btn .mlabel { font-size: 10px; color: var(--muted); line-height: 1.4; font-weight: 700; letter-spacing: 0.03em; }
+    .mode-btn.active {
+      background: var(--gold-bg); border-color: var(--gold);
+      box-shadow: 0 2px 12px rgba(181,128,10,0.18);
+    }
+    .mode-btn.active .mlabel { color: var(--gold-dark); }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex; gap: 3px; margin-bottom: 16px;
+      background: var(--bg2); border-radius: 12px; padding: 3px;
+    }
+    .tab {
+      flex: 1; padding: 9px 0; border: none; border-radius: 10px; cursor: pointer;
+      font-size: 13px; font-family: 'Lato', sans-serif; font-weight: 700;
+      letter-spacing: 0.03em; transition: all 0.2s;
+      background: transparent; color: var(--muted);
+    }
+    .tab.active { background: var(--surface); color: var(--gold-dark); box-shadow: var(--shadow); }
+
+    /* ── INPUT CARD ── */
+    .input-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 16px; margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+    .input-label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; }
+    .input-row { display: flex; gap: 8px; align-items: stretch; }
+    .main-input {
+      flex: 1; background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 12px 14px; color: var(--text);
+      font-family: 'Lato', sans-serif; font-size: 15px; outline: none;
+      -webkit-appearance: none; min-width: 0;
+    }
+    .main-input::placeholder { color: var(--dim); }
+    .main-input:focus { border-color: var(--gold); background: var(--surface); }
+
+    /* Voice button */
+    .btn-voice {
+      width: 46px; background: var(--bg2); border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: 20px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0;
+    }
+    .btn-voice:hover { border-color: var(--gold); background: var(--gold-bg); }
+    .btn-voice.listening {
+      background: #fdecea; border-color: var(--danger);
+      animation: voicePulse 0.8s infinite;
+    }
+
+    /* Translate button */
+    .btn-go {
+      background: var(--gold); border: none; border-radius: 10px;
+      width: 46px; color: white; font-size: 20px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+    }
+    .btn-go:hover { background: var(--gold-dark); }
+    .btn-go:disabled { background: var(--dim); cursor: not-allowed; }
+
+    /* Voice lang pills */
+    .voice-langs { display: flex; gap: 7px; margin-top: 10px; }
+    .vlang-btn {
+      flex: 1; padding: 7px; border: 1.5px solid var(--border);
+      border-radius: 10px; background: var(--bg); color: var(--muted);
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      font-family: 'Lato', sans-serif; transition: all 0.2s; text-align: center;
+    }
+    .vlang-btn.active { border-color: var(--gold); color: var(--gold-dark); background: var(--gold-bg); }
+
+    /* Voice status */
+    .voice-status {
+      margin-top: 10px; padding: 8px 12px; border-radius: 8px;
+      background: #fdecea; border: 1px solid #f5c6c2;
+      font-size: 12px; color: var(--danger); text-align: center;
+      display: none;
+    }
+    .voice-status.active {
+      background: #edfaf3; border-color: #a8e6c4;
+      color: var(--green); display: block;
+    }
+    .voice-status.error { display: block; }
+
+    /* ── CATEGORIES ── */
+    .cats { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 18px; }
+    .cat-btn {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 20px; padding: 7px 13px; color: var(--gold-dark);
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      font-family: 'Lato', sans-serif; transition: all 0.2s;
+      box-shadow: var(--shadow);
+    }
+    .cat-btn:active { background: var(--gold-bg); border-color: var(--gold); }
+
+    /* ── LOADING ── */
+    .loading {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 30px; text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .loading-icon { font-size: 32px; animation: spin 1.5s linear infinite; margin-bottom: 10px; display: inline-block; }
+    .loading p { font-size: 13px; color: var(--muted); font-weight: 700; }
+
+    /* ── ERROR ── */
+    .error-box {
+      background: #fdecea; border: 1.5px solid #f5c6c2;
+      border-radius: 12px; padding: 13px 15px; color: var(--danger);
+      font-size: 13px; margin-bottom: 14px; line-height: 1.5;
+    }
+
+    /* ── RESULT ── */
+    .result {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+      box-shadow: var(--shadow2);
+      animation: fadeUp 0.35s ease;
+    }
+    .result-header {
+      padding: 11px 16px; background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    }
+    .result-src { font-size: 13px; color: var(--text2); flex: 1; font-weight: 400; }
+    .type-badge {
+      font-size: 10px; padding: 3px 10px; border-radius: 20px;
+      font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;
+    }
+
+    /* Main translation display */
+    .result-main {
+      padding: 24px 20px; text-align: center;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, #fffdf8 0%, #fdf5e6 100%);
+    }
+    .arabic-text {
+      font-family: 'Amiri', serif; font-size: 42px; color: var(--text);
+      direction: rtl; line-height: 1.4; margin-bottom: 10px;
+    }
+    .malayalam-text {
+      font-size: 30px; color: var(--text); line-height: 1.5; margin-bottom: 10px;
+    }
+    .transliteration {
+      font-size: 17px; color: var(--gold); font-style: italic;
+      font-family: 'Playfair Display', serif; letter-spacing: 0.04em;
+    }
+    .meaning-small { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+    /* Speak button */
+    .btn-speak {
+      margin-top: 14px; padding: 8px 20px;
+      background: var(--gold-bg); border: 1.5px solid var(--gold);
+      border-radius: 20px; color: var(--gold-dark); font-size: 13px;
+      font-weight: 700; cursor: pointer; font-family: 'Lato', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-speak:hover { background: var(--gold); color: white; }
+
+    /* Sections */
+    .result-section { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .result-section:last-child { border-bottom: none; }
+    .sec-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+    }
+    .sec-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+    .extra-lang { font-size: 17px; color: var(--text); margin-bottom: 3px; }
+
+    /* Examples */
+    .example {
+      margin-bottom: 10px; padding: 10px 12px;
+      background: var(--bg); border-radius: 10px;
+      border-left: 3px solid var(--gold);
+    }
+    .ex-src { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+    .ex-ar { font-family: 'Amiri', serif; font-size: 17px; color: var(--text); direction: rtl; margin-bottom: 2px; }
+    .ex-ml { font-size: 14px; color: var(--text); margin-bottom: 2px; }
+    .ex-tr { font-size: 12px; color: var(--gold); font-style: italic; }
+
+    /* ── HISTORY ── */
+    .history-item {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 13px 15px; margin-bottom: 10px;
+      cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow);
+      animation: fadeUp 0.3s ease;
+    }
+    .history-item:active { border-color: var(--gold); background: var(--gold-bg); }
+    .hist-mode { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 3px; text-transform: uppercase; }
+    .hist-src { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+    .hist-main { font-family: 'Amiri', serif; font-size: 22px; color: var(--text); direction: rtl; margin-bottom: 2px; }
+    .hist-main-ml { font-size: 17px; color: var(--text); margin-bottom: 2px; }
+    .hist-tr { font-size: 12px; color: var(--gold); font-style: italic; }
+    .empty-state { text-align: center; color: var(--muted); padding: 50px 20px; font-size: 15px; line-height: 2; }
+
+    /* ── BOTTOM NAV ── */
+    .bottom-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--surface); border-top: 1px solid var(--border);
+      padding: 10px 16px; text-align: center;
+      font-size: 11px; color: var(--muted); letter-spacing: 0.08em;
+      font-family: 'Amiri', serif; box-shadow: 0 -2px 10px rgba(100,70,20,0.08);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes voicePulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192,57,43,0.3); } 50% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(192,57,43,0); } }
+  </style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-title">Emirati Pocket</div>
+  <div class="topbar-arabic">لهجة إماراتية · മലയാളം</div>
+</div>
+
+<div class="app">
+
+  <!-- API Key -->
+  <div class="setup-card" id="setupCard">
+    <h3>🔑 Gemini API Key <span style="color:var(--green);font-size:11px;font-weight:400;">(Free)</span></h3>
+    <p>Get your free key at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> → Sign in with Google → click <strong>Get API Key</strong>. Your key stays on your device only.</p>
+    <div class="key-row">
+      <input type="password" id="apiKeyInput" placeholder="AIza..." />
+      <button class="btn-save" onclick="saveApiKey()">Save</button>
+    </div>
+    <div id="keyStatus"></div>
+  </div>
+
+  <!-- Mode Selector -->
+  <div class="section-title">Translation Mode</div>
+  <div class="modes">
+    <button class="mode-btn active" id="modeBtn0" onclick="setMode(0)">
+      <span class="micon">🇬🇧</span>
+      <span class="mlabel">English<br>→ Emirati</span>
+    </button>
+    <button class="mode-btn" id="modeBtn1" onclick="setMode(1)">
+      <span class="micon">🇮🇳</span>
+      <span class="mlabel">Manglish<br>→ Emirati</span>
+    </button>
+    <button class="mode-btn" id="modeBtn2" onclick="setMode(2)">
+      <span class="micon">🔄</span>
+      <span class="mlabel">Arabic<br>→ Malayalam</span>
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" id="tabTranslate" onclick="switchTab('translate')">🌙 Translate</button>
+    <button class="tab" id="tabHistory" onclick="switchTab('history')">📜 History</button>
+  </div>
+
+  <!-- Translate panel -->
+  <div id="panelTranslate">
+
+    <div class="input-card">
+      <div class="input-label" id="inputLabel">Type in English</div>
+      <div class="input-row">
+        <input class="main-input" type="text" id="mainInput"
+          placeholder="e.g. good morning..."
+          onkeydown="if(event.key==='Enter') doTranslate()" />
+        <button class="btn-voice" id="btnVoice" onclick="toggleVoice()" title="Voice input">🎤</button>
+        <button class="btn-go" id="btnGo" onclick="doTranslate()">→</button>
+      </div>
+
+      <!-- Voice language selector -->
+      <div class="voice-langs" id="voiceLangs">
+        <button class="vlang-btn active" id="vlang0" onclick="setVoiceLang('en-US')">🇬🇧 Speak English</button>
+        <button class="vlang-btn" id="vlang1" onclick="setVoiceLang('ml-IN')">🇮🇳 Speak Malayalam</button>
+      </div>
+      <div class="voice-status" id="voiceStatus"></div>
+    </div>
+
+    <div class="section-title" id="catsLabel">Quick Topics</div>
+    <div class="cats" id="cats"></div>
+
+    <div id="errorBox" class="error-box" style="display:none;"></div>
+
+    <div id="loadingBox" class="loading" style="display:none;">
+      <div class="loading-icon">🌀</div>
+      <p id="loadingText">Translating...</p>
+    </div>
+
+    <div id="resultBox" style="display:none;"></div>
+  </div>
+
+  <!-- History panel -->
+  <div id="panelHistory" style="display:none;">
+    <div id="historyList"></div>
+  </div>
+
+</div>
+
+<div class="bottom-bar">Emirati Pocket · اللهجة الإماراتية · മലയാളം</div>
+
+<script>
+// ── PROMPTS ──────────────────────────────────────────────────────────────────
+
+const PROMPTS = {
+  0: `You are an expert in the Emirati Arabic dialect (اللهجة الإماراتية / Al Ramsa).
+Translate the English input into authentic spoken Emirati dialect. NOT Modern Standard Arabic. NOT generic Gulf Arabic.
+Return ONLY a raw JSON object, no markdown, no backticks, no explanation outside JSON:
+{
+  "emirati": "Emirati dialect in Arabic script",
+  "transliteration": "phonetic romanization of Emirati",
+  "source": "restated English input",
+  "type": "phrase|noun|verb|adjective|connector|preposition|proverb|greeting|number",
+  "notes": "grammar note: tense / plural / masculine+feminine forms / cultural context",
+  "examples": [
+    { "src": "English example sentence", "ar": "Emirati Arabic", "tr": "romanized" }
+  ]
+}`,
+
+  1: `You are an expert in Emirati Arabic dialect (Al Ramsa) and Malayalam language.
+The user types Malayalam words/phrases using English letters (Manglish). Understand the Malayalam meaning first, then translate into authentic spoken Emirati Arabic dialect. NOT MSA. NOT generic Gulf Arabic.
+Return ONLY a raw JSON object, no markdown, no backticks:
+{
+  "emirati": "Emirati dialect in Arabic script",
+  "transliteration": "phonetic romanization of Emirati",
+  "source": "Manglish input as typed",
+  "malayalam": "Malayalam script of what user typed",
+  "meaning": "English meaning",
+  "type": "phrase|noun|verb|adjective|connector|preposition|proverb|greeting|number",
+  "notes": "grammar note: tense / plural / masculine+feminine / cultural context",
+  "examples": [
+    { "ml": "Malayalam script", "ar": "Emirati Arabic", "tr": "romanized Arabic" }
+  ]
+}`,
+
+  2: `You are an expert in Arabic (including Emirati dialect, MSA, Gulf Arabic) and Malayalam.
+The user inputs Arabic text. Translate it into Malayalam script.
+Return ONLY a raw JSON object, no markdown, no backticks:
+{
+  "malayalam": "Malayalam script translation",
+  "transliteration": "romanized Malayalam (Manglish style)",
+  "source": "the Arabic input",
+  "meaning": "English meaning",
+  "type": "phrase|noun|verb|adjective|connector|preposition|proverb|greeting|number",
+  "notes": "any dialect or usage notes",
+  "examples": [
+    { "ar": "Arabic example", "ml": "Malayalam script", "tr": "romanized Malayalam" }
+  ]
+}`
+};
+
+// ── CATEGORIES ────────────────────────────────────────────────────────────────
+
+const CATS = {
+  0: [
+    { label: "👋 Greeting",    q: "Hello how are you good morning" },
+    { label: "🍖 Food",        q: "I am hungry what is for lunch" },
+    { label: "🔢 Numbers",     q: "one two three four five" },
+    { label: "👨‍👩‍👧 Family",  q: "father mother brother sister" },
+    { label: "⚡ Verbs",       q: "go come eat drink sleep" },
+    { label: "🎨 Colors",      q: "red blue green yellow white black" },
+    { label: "🛍️ Market",      q: "how much does this cost" },
+    { label: "💭 Feelings",    q: "I am happy I am tired I am fine" },
+    { label: "🙏 Respect",     q: "thank you please excuse me sorry" },
+    { label: "🗺️ Directions",  q: "left right straight stop here" },
+    { label: "⏰ Time",        q: "today tomorrow yesterday morning evening" },
+    { label: "🏠 Home",        q: "house room door window kitchen" },
+  ],
+  1: [
+    { label: "👋 Vanakkam",    q: "sughamano sughamayi irikkunnu" },
+    { label: "🍖 Kazhikkal",   q: "vishakkunnu enna kazhikkum" },
+    { label: "👨‍👩‍👧 Kudumbam", q: "achan amma aniyan chechi" },
+    { label: "💰 Vila",        q: "ithinte vila ethra aanu" },
+    { label: "🙏 Nandi",       q: "nandi kshamikkanam saukaryam" },
+    { label: "💭 Vikaram",     q: "santhosham aanu khashtam aanu sheri aanu" },
+    { label: "🗺️ Vazhi",      q: "idathu valam nere nilku ithile" },
+    { label: "⚡ Kriyakal",    q: "poku vaa thinna kudikka urangu" },
+    { label: "⏰ Samayam",     q: "innu nale innale ravile vaikitu" },
+    { label: "🏠 Veedu",       q: "veedu muri vathil jaalam അടുക്കള" },
+  ],
+  2: [
+    { label: "👋 تحية",        q: "مرحبا كيف حالك صباح الخير" },
+    { label: "🍖 طعام",        q: "أنا جوعان ماذا نأكل" },
+    { label: "🔢 أرقام",       q: "واحد اثنين ثلاثة أربعة خمسة" },
+    { label: "💰 سعر",         q: "بكم هذا كم الثمن" },
+    { label: "🙏 شكر",         q: "شكراً من فضلك عفواً آسف" },
+    { label: "💭 مشاعر",       q: "أنا سعيد أنا تعبان بخير" },
+    { label: "🗺️ اتجاهات",     q: "يساراً يميناً مستقيم هنا" },
+    { label: "⏰ وقت",         q: "اليوم غداً أمس صباح مساء" },
+  ]
+};
+
+const INPUT_LABELS = [
+  "Type in English",
+  "Type in Manglish (Malayalam in English letters)",
+  "Paste Arabic text"
+];
+const PLACEHOLDERS = [
+  "e.g. good morning, how much, I want water...",
+  "e.g. sughamano, enthu vishesham, vishakkunnu...",
+  "e.g. مرحبا كيف حالك بكم هذا..."
+];
+const LOADING_TEXTS = [
+  "Translating to Emirati Arabic...",
+  "Translating to Emirati Arabic...",
+  "Translating to Malayalam..."
+];
+const MODE_LABELS = ["🇬🇧 EN → Emirati", "🇮🇳 Manglish → Emirati", "🔄 Arabic → Malayalam"];
+
+const TYPE_COLORS = {
+  phrase: "#b5800a", noun: "#1a6fa8", verb: "#1a8a4a",
+  adjective: "#8a3a8a", connector: "#6a5acd", preposition: "#6a5acd",
+  proverb: "#a07800", greeting: "#b5800a", number: "#1a6fa8",
+};
+const TYPE_BG = {
+  phrase: "#fdf3e0", noun: "#e8f4fd", verb: "#e8f8ee",
+  adjective: "#f8e8f8", connector: "#eeeaf8", preposition: "#eeeaf8",
+  proverb: "#fdf5e0", greeting: "#fdf3e0", number: "#e8f4fd",
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+
+let mode = 0;
+let voiceLang = "en-US";
+let apiKey = localStorage.getItem("ep_apikey") || "";
+let history = [];
+try { history = JSON.parse(localStorage.getItem("ep_history") || "[]"); } catch(e) {}
+let recognition = null;
+let isListening = false;
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+
+function init() {
+  if (apiKey) {
+    document.getElementById("keyStatus").textContent = "✓ API key saved on this device";
+    document.getElementById("apiKeyInput").value = "••••••••••••••••";
+  }
+  checkVoiceSupport();
+  renderCats();
+}
+
+function checkVoiceSupport() {
+  const supported = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+  if (!supported) {
+    const btn = document.getElementById("btnVoice");
+    btn.title = "Voice not supported — use Chrome browser";
+    btn.style.opacity = "0.4";
+    btn.onclick = () => showVoiceStatus("Voice input requires Chrome browser. Please open this app in Chrome.", "error");
+  }
+}
+
+// ── API KEY ───────────────────────────────────────────────────────────────────
+
+function saveApiKey() {
+  const val = document.getElementById("apiKeyInput").value.trim();
+  if (!val || val.includes("•")) return;
+  apiKey = val;
+  localStorage.setItem("ep_apikey", apiKey);
+  document.getElementById("keyStatus").textContent = "✓ API key saved on this device";
+  document.getElementById("apiKeyInput").value = "••••••••••••••••";
+}
+
+// ── MODE ──────────────────────────────────────────────────────────────────────
+
+function setMode(m) {
+  mode = m;
+  [0,1,2].forEach(i => {
+    document.getElementById("modeBtn"+i).className = "mode-btn" + (i===m?" active":"");
+  });
+  document.getElementById("inputLabel").textContent = INPUT_LABELS[m];
+  document.getElementById("mainInput").placeholder = PLACEHOLDERS[m];
+  document.getElementById("mainInput").value = "";
+  document.getElementById("loadingText").textContent = LOADING_TEXTS[m];
+  document.getElementById("resultBox").style.display = "none";
+  hideError();
+  clearVoiceStatus();
+
+  // Hide voice for Arabic→Malayalam
+  const showVoice = m !== 2;
+  document.getElementById("btnVoice").style.display = showVoice ? "" : "none";
+  document.getElementById("voiceLangs").style.display = showVoice ? "" : "none";
+
+  // Default voice lang per mode
+  if (m === 1) setVoiceLang("ml-IN");
+  else setVoiceLang("en-US");
+
+  renderCats();
+  stopVoice();
+}
+
+// ── VOICE LANG ────────────────────────────────────────────────────────────────
+
+function setVoiceLang(lang) {
+  voiceLang = lang;
+  document.getElementById("vlang0").className = "vlang-btn" + (lang==="en-US"?" active":"");
+  document.getElementById("vlang1").className = "vlang-btn" + (lang==="ml-IN"?" active":"");
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+  document.getElementById("panelTranslate").style.display = tab==="translate" ? "" : "none";
+  document.getElementById("panelHistory").style.display = tab==="history" ? "" : "none";
+  document.getElementById("tabTranslate").className = "tab"+(tab==="translate"?" active":"");
+  document.getElementById("tabHistory").className = "tab"+(tab==="history"?" active":"");
+  if (tab==="history") renderHistory();
+}
+
+// ── CATEGORIES ────────────────────────────────────────────────────────────────
+
+function renderCats() {
+  const el = document.getElementById("cats");
+  el.innerHTML = "";
+  (CATS[mode]||[]).forEach(cat => {
+    const btn = document.createElement("button");
+    btn.className = "cat-btn";
+    btn.textContent = cat.label;
+    btn.onclick = () => { document.getElementById("mainInput").value = cat.q; doTranslate(); };
+    el.appendChild(btn);
+  });
+}
+
+// ── VOICE INPUT ───────────────────────────────────────────────────────────────
+
+function toggleVoice() {
+  if (isListening) { stopVoice(); return; }
+  startVoice();
+}
+
+function startVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    showVoiceStatus("Voice input requires Chrome browser.", "error");
+    return;
+  }
+  stopVoice();
+  recognition = new SR();
+  recognition.lang = voiceLang;
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    isListening = true;
+    const btn = document.getElementById("btnVoice");
+    btn.className = "btn-voice listening";
+    btn.textContent = "⏹";
+    const lang = voiceLang === "ml-IN" ? "Malayalam" : "English";
+    showVoiceStatus("🎤 Listening in " + lang + "... tap ⏹ to stop", "active");
+  };
+
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    const conf = Math.round(e.results[0][0].confidence * 100);
+    document.getElementById("mainInput").value = transcript;
+    showVoiceStatus("✓ Got: \"" + transcript + "\" (" + conf + "% confidence)", "active");
+    stopVoice();
+    setTimeout(() => doTranslate(), 300);
+  };
+
+  recognition.onerror = (e) => {
+    stopVoice();
+    const msgs = {
+      "not-allowed": "Microphone access denied. Allow mic in browser settings.",
+      "no-speech": "No speech detected. Please try again.",
+      "network": "Network error during voice recognition.",
+      "aborted": "Voice input cancelled."
+    };
+    showVoiceStatus(msgs[e.error] || "Voice error: " + e.error, "error");
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    const btn = document.getElementById("btnVoice");
+    btn.className = "btn-voice";
+    btn.textContent = "🎤";
+  };
+
+  try {
+    recognition.start();
+  } catch(e) {
+    showVoiceStatus("Could not start mic: " + e.message, "error");
+  }
+}
+
+function stopVoice() {
+  isListening = false;
+  if (recognition) {
+    try { recognition.abort(); } catch(e) {}
+    recognition = null;
+  }
+  const btn = document.getElementById("btnVoice");
+  if (btn) { btn.className = "btn-voice"; btn.textContent = "🎤"; }
+}
+
+function showVoiceStatus(msg, type) {
+  const el = document.getElementById("voiceStatus");
+  el.textContent = msg;
+  el.className = "voice-status " + (type||"");
+}
+function clearVoiceStatus() {
+  const el = document.getElementById("voiceStatus");
+  el.className = "voice-status"; el.textContent = "";
+}
+
+// ── TEXT TO SPEECH (Speak result) ─────────────────────────────────────────────
+
+function speakText(text, lang) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = lang;
+  utt.rate = 0.85;
+  window.speechSynthesis.speak(utt);
+}
+
+// ── TRANSLATE ─────────────────────────────────────────────────────────────────
+
+async function doTranslate() {
+  const input = document.getElementById("mainInput").value.trim();
+  if (!input) return;
+  if (!apiKey) { showError("Please enter your Gemini API key above first."); return; }
+
+  showLoading(true);
+  hideError();
+  document.getElementById("resultBox").style.display = "none";
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: PROMPTS[mode] }] },
+          contents: [{ role: "user", parts: [{ text: input }] }],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 1000 }
+        })
+      }
+    );
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const raw = data.candidates[0].content.parts[0].text;
+    const clean = raw.replace(/```json|```/g,"").trim();
+    const parsed = JSON.parse(clean);
+    showResult(parsed, input);
+    history = [{ mode, input, result: parsed, ts: Date.now() }, ...history.slice(0, 59)];
+    localStorage.setItem("ep_history", JSON.stringify(history));
+  } catch(e) {
+    showError("Translation failed: " + e.message + ". Check your API key and internet connection.");
+  }
+  showLoading(false);
+}
+
+function showLoading(on) {
+  document.getElementById("loadingBox").style.display = on ? "" : "none";
+  document.getElementById("btnGo").disabled = on;
+}
+
+function showError(msg) {
+  const el = document.getElementById("errorBox");
+  el.innerHTML = "⚠️ " + msg;
+  el.style.display = "";
+}
+function hideError() { document.getElementById("errorBox").style.display = "none"; }
+
+// ── RENDER RESULT ─────────────────────────────────────────────────────────────
+
+function showResult(r, input) {
+  const color = TYPE_COLORS[r.type] || "#b5800a";
+  const bgColor = TYPE_BG[r.type] || "#fdf3e0";
+  let mainHtml = "";
+  let extraSections = "";
+  let examplesHtml = "";
+
+  if (mode === 2) {
+    // Arabic → Malayalam
+    const speakMl = r.malayalam ? `<button class="btn-speak" onclick="speakText('${(r.malayalam||"").replace(/'/g,"\\'")}','ml-IN')">🔊 Speak Malayalam</button>` : "";
+    mainHtml = `
+      <div class="malayalam-text">${r.malayalam||""}</div>
+      <div class="transliteration">${r.transliteration||""}</div>
+      ${r.meaning ? `<div class="meaning-small">${r.meaning}</div>` : ""}
+      ${speakMl}`;
+    examplesHtml = (r.examples||[]).map(ex=>`
+      <div class="example">
+        <div class="ex-ar">${ex.ar||""}</div>
+        <div class="ex-ml">${ex.ml||""}</div>
+        <div class="ex-tr">${ex.tr||""}</div>
+      </div>`).join("");
+  } else {
+    // → Emirati
+    const speakAr = r.emirati ? `<button class="btn-speak" onclick="speakText('${(r.emirati||"").replace(/'/g,"\\'")}','ar-AE')">🔊 Speak Arabic</button>` : "";
+    mainHtml = `
+      <div class="arabic-text">${r.emirati||""}</div>
+      <div class="transliteration">${r.transliteration||""}</div>
+      ${speakAr}`;
+    if (mode === 1 && r.malayalam) {
+      extraSections += `
+        <div class="result-section">
+          <div class="sec-label">🇮🇳 Malayalam (your input)</div>
+          <div class="extra-lang">${r.malayalam}</div>
+          <div class="sec-text" style="color:var(--muted)">${r.meaning||""}</div>
+        </div>`;
+    }
+    examplesHtml = (r.examples||[]).map(ex=>`
+      <div class="example">
+        <div class="ex-src">${ex.src||ex.ml||""}</div>
+        <div class="ex-ar">${ex.ar||""}</div>
+        <div class="ex-tr">${ex.tr||""}</div>
+      </div>`).join("");
+  }
+
+  document.getElementById("resultBox").innerHTML = `
+    <div class="result">
+      <div class="result-header">
+        <span class="result-src">${r.source||input}</span>
+        <span class="type-badge" style="background:${bgColor};color:${color};border:1px solid ${color}44">${r.type||""}</span>
+      </div>
+      <div class="result-main">${mainHtml}</div>
+      ${extraSections}
+      ${r.notes ? `<div class="result-section"><div class="sec-label">📝 Grammar Notes</div><div class="sec-text">${r.notes}</div></div>` : ""}
+      ${examplesHtml ? `<div class="result-section"><div class="sec-label">💬 Examples</div>${examplesHtml}</div>` : ""}
+    </div>`;
+  document.getElementById("resultBox").style.display = "";
+  document.getElementById("resultBox").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+
+function renderHistory() {
+  const el = document.getElementById("historyList");
+  if (!history.length) {
+    el.innerHTML = '<div class="empty-state">No translations yet.<br>Start by typing or speaking! 🎤</div>';
+    return;
+  }
+  el.innerHTML = history.map((item, i) => {
+    const r = item.result;
+    const isAR2ML = (item.mode||0) === 2;
+    return `<div class="history-item" onclick="loadHistory(${i})">
+      <div class="hist-mode">${MODE_LABELS[item.mode||0]}</div>
+      <div class="hist-src">${item.input}</div>
+      ${isAR2ML
+        ? `<div class="hist-main-ml">${r.malayalam||""}</div>`
+        : `<div class="hist-main">${r.emirati||""}</div>`}
+      <div class="hist-tr">${r.transliteration||""}</div>
+    </div>`;
+  }).join("");
+}
+
+function loadHistory(i) {
+  const item = history[i];
+  setMode(item.mode||0);
+  document.getElementById("mainInput").value = item.input;
+  showResult(item.result, item.input);
+  switchTab("translate");
+}
+
+init();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
